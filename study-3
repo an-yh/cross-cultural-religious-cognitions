@@ -1,0 +1,185 @@
+---
+title: "Reading Study 3 Analysis"
+author: "Daniel Yi"
+date: "November 26, 2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(lavaan)
+library(psych)
+ds <- read.csv("~/Research Study/Studies/Reading Study/Study 3 Data/Analyses/Study 3 Cleaned Data 1.csv")
+ds$BiG <- ordered(ds$BiG, c(2,3,1))
+
+#Remove all not Hindu#
+ds <- ds[ds$RelAff == 4 | is.na(ds$RelAff) , ]
+
+empOut <- cfa(emp, ds, ordered=eqNames)
+fit <- '
+emp =~ EQ_1 + EQ_6 + EQ_19 + EQ_22 + EQ_25 + EQ_26 + EQ_36 + EQ_41 + EQ_43 + EQ_44 + EQ_52 + EQ_54 + EQ_55 + EQ_56 + EQ_58 + EQ_59 + EQ_60
+
+anth.i =~ IDAQ_3 + IDAQ_7 + IDAQ_9 + IDAQ_11 + IDAQ_13 + IDAQ_14 + IDAQ_17 + IDAQ_21 + IDAQ_23 + IDAQ_26
+
+dual =~ DS_2 + DS_5 + DS_11 + DS_19 + DS_21 + DS_23 + DS_26
+#Only Factor 1: Classic Dualism
+
+teleo =~ Teleo_1 + Teleo_2 + Teleo_4 + Teleo_5 + Teleo_8 + Teleo_10 + Teleo_12 + Teleo_13 + Teleo_15 + Teleo_16 + Teleo_24
+
+psi =~ PB_2 + PB_9 + PB_16 + PB_23
+witch =~ PB_3 + PB_10 + PB_17 + PB_24
+super =~ PB_4 + PB_7 + PB_11 + PB_14 + PB_18
+spirit =~ PB_5 + PB_12 + PB_19 + PB_20 + PB_21 + PB_25 + PB_26
+extra =~ PB_6 + PB_13 
+para =~ psi + witch + super + spirit + extra
+
+anth.i ~ emp
+dual ~ emp
+teleo ~ emp
+
+#BiGL =~ BiG #Purely for plotting, same as just using observed variable
+#BiG ~ c(a.b1,a.b2)*anth.i + c(d.b1,d.b2)*dual + c(t.b1,t.b2)*teleo
+BiG ~ anth.i + dual + teleo
+
+#para ~ c(a.p1,a.p2)*anth.i + c(d.p1,d.p2)*dual + c(t.p1,t.p2)*teleo
+para ~ anth.i + dual + teleo
+
+BiG ~~ para
+
+anth.i ~~ dual + teleo
+
+dual ~~ teleo
+'
+eqNames <- grep('EQ.*',names(ds),value = TRUE)
+fitOut <- sem(fit, data = ds,mimic='Mplus', ordered = eqNames)
+summary(fitOut, fit.measures=TRUE, standardized=TRUE)
+```
+
+```{r}
+emp <- '
+emp =~ EQ_1 + EQ_6 + EQ_19 + EQ_22 + EQ_25 + EQ_26 + EQ_36 + EQ_41 + EQ_43 + EQ_44 + EQ_52 + EQ_54 + EQ_55 + EQ_56 + EQ_58 + EQ_59 + EQ_60
+'
+emp <- '
+cog =~ EQ_55 + EQ_52 + EQ_25 + EQ_54 + EQ_44 + EQ_58 + EQ_26 + EQ_41 + EQ_19 + EQ_36 + EQ_1
+emo =~ EQ_32 + EQ_59 + EQ_42 + EQ_21 + EQ_48 + EQ_6 + EQ_27 + EQ_50 + EQ_43 + EQ_22 + EQ_29
+soc =~ EQ_8 + EQ_35 + EQ_12 + EQ_14 + EQ_4 + EQ_57
+emp =~ cog + emo + soc
+'
+eqName <- c("EQ_1", "EQ_4",  "EQ_6", "EQ_8", "EQ_12", "EQ_14", "EQ_19", "EQ_21", "EQ_22", "EQ_25", "EQ_26", "EQ_27", "EQ_29", "EQ_32", "EQ_35", "EQ_36", "EQ_41", "EQ_42", "EQ_43", "EQ_44", "EQ_48", "EQ_50", "EQ_52", "EQ_54", "EQ_55", "EQ_57", "EQ_58", "EQ_59")
+eqNames <- grep('EQ.*',names(ds),value = TRUE)
+empOut <- cfa(emp, ds, ordered=eqName)             #Confirmatory Analysis
+summary(empOut,fit.measures=TRUE,standardized=TRUE)
+
+fa.parallel(ds[,eqNames])
+print(fa(ds[,eqName],nfactors = 3),sort=F,cut=.3) #Exploratory Analysis
+
+#Anthropomorphism Factor Analysis
+anth <- '
+anth.in =~ IDAQ_4 + IDAQ_7 + IDAQ_12 + IDAQ_14 + IDAQ_20 + IDAQ_21 + IDAQ_22 + IDAQ_23 + IDAQ_26 + IDAQ_29
+anth.i =~ IDAQ_3 + IDAQ_7 + IDAQ_9 + IDAQ_11 + IDAQ_13 + IDAQ_14 + IDAQ_17 + IDAQ_21 + IDAQ_23 + IDAQ_26
+anth.a =~ IDAQ_4 + IDAQ_12 + IDAQ_20 + IDAQ_22 + IDAQ_29
+anth.n =~ IDAQ_7 + IDAQ_14 + IDAQ_21 + IDAQ_23 + IDAQ_26
+anth =~ anth.i + anth.a
+'
+anthname.i <- c("IDAQ_3", "IDAQ_7", "IDAQ_9", "IDAQ_11", "IDAQ_13", "IDAQ_14", "IDAQ_17", "IDAQ_21", "IDAQ_23", "IDAQ_26")
+anthname <- c("IDAQ_3", "IDAQ_4", "IDAQ_7", "IDAQ_9", "IDAQ_11", "IDAQ_12", "IDAQ_13", "IDAQ_14", "IDAQ_17", "IDAQ_20", "IDAQ_21", "IDAQ_22", "IDAQ_23", "IDAQ_26", "IDAQ_29")
+anthNames <- grep('IDAQ.*',names(ds),value = TRUE)
+anthOut <- cfa(anth, ds, mimic = "Mplus")
+summary(anthOut, fit.measures=TRUE, standardized=TRUE)
+
+fa.parallel(ds[,anthname])
+scree(ds[,anthNames])
+print(fa(ds[anthname.i],nfactors=1), sort=F, cut=.3)
+
+modindices(anthOut, sort=TRUE)
+
+#Dualism Factor Analysis
+dual <- '
+dual =~ DS_2 + DS_5 + DS_11 + DS_19 + DS_21 + DS_23 + DS_26
+'
+
+dualname <- c("DS_2", "DS_5", "DS_11", "DS_19", "DS_21", "DS_23",  "DS_26")
+dualNames <- grep('DS.*',names(ds),value = TRUE)
+dualOut <- cfa(dual, ds, mimic="Mplus")
+summary(dualOut, fit.measures=TRUE, standardized=TRUE)
+
+fa.parallel(ds[,dualNames])
+print(fa(ds[dualNames],nfactors=5), sort=F, cut=.3)
+
+modindices(dualOut, sort=TRUE)
+
+#Teleology Factor Analysis
+teleo <- '
+teleo =~ Teleo_1 + Teleo_2 + Teleo_4 + Teleo_5 + Teleo_8 + Teleo_10 + Teleo_12 + Teleo_13 + Teleo_15 + Teleo_16 + Teleo_24
+'
+teleoNames <- grep('Teleo.*',names(ds),value = TRUE)
+teleoOut <- cfa(teleo, ds, mimic = "Mplus")
+summary(teleoOut, fit.measures=TRUE, standardized=TRUE)
+
+fa.parallel(ds[,teleoNames])
+print(fa(ds[teleoNames],nfactors=3), sort=TRUE, cut=.3)
+
+#Paranormal Factor Analysis
+para <- '
+psi =~ PB_2 + PB_9 + PB_16 + PB_23
+super =~ PB_4 + PB_7 + PB_11 + PB_14 + PB_18
+spirit =~ PB_5 + PB_12 + PB_19 + PB_20 + PB_21 + PB_26
+extra =~ PB_6 + PB_13 
+para =~ psi + super + spirit + extra
+'
+paraname <- c("PB_2", "PB_4", "PB_5", "PB_6", "PB_7", "PB_9", "PB_11", "PB_12", "PB_13", "PB_14", "PB_16", "PB_18", "PB_19", "PB_20", "PB_21", "PB_23", "PB_25", "PB_26")
+paraNames <- grep('PB.*', names(ds), value=TRUE)
+paraOut <- cfa(para, ds, mimic = "Mplus")
+summary(paraOut, fit.measure=TRUE, standardized=TRUE)
+
+fa.parallel(ds[,paraname])
+print(fa(ds[,paraname],nfactors=4),sort=F, cut=.3)
+```
+
+```{r}
+fit <- '
+emp =~ EQ_55 + EQ_52 + EQ_25 + EQ_54 + EQ_44 + EQ_58 + EQ_26 + EQ_41 + EQ_19 + EQ_36 + EQ_1
+
+#anth.t =~ IDAQ_3 + IDAQ_9 + IDAQ_11 + IDAQ_13 + IDAQ_17
+#anth.n =~ IDAQ_7 + IDAQ_14 + IDAQ_21 + IDAQ_23 + IDAQ_26
+anth.a =~ IDAQ_4 + IDAQ_12 + IDAQ_20 + IDAQ_22 + IDAQ_29
+#anth =~ anth.n + anth.a
+
+dual =~ DS_1 + DS_2 + DS_4 + DS_5 + DS_11 + DS_14 + DS_16 + DS_18 + DS_19 + DS_21 + DS_23 + DS_26
+
+teleo =~ Teleo_1 + Teleo_2 + Teleo_4 + Teleo_5 + Teleo_8 + Teleo_10 + Teleo_12 + Teleo_13 + Teleo_15 + Teleo_16 + Teleo_24
+
+psi =~ PB_2 + PB_9 + PB_16 + PB_23
+super =~ PB_4 + PB_7 + PB_11 + PB_14 + PB_18
+spirit =~ PB_5 + PB_12 + PB_19 + PB_20 + PB_21 + PB_26
+extra =~ PB_6 + PB_13 
+para =~ psi + super + spirit + extra
+
+anth.a ~ emp
+dual ~ emp
+teleo ~ emp
+
+#BiGL =~ BiG #Purely for plotting, same as just using observed variable
+#BiG ~ c(a.b1,a.b2)*anth.a + c(d.b1,d.b2)*dual + c(t.b1,t.b2)*teleo
+BiG ~ anth.a + dual + teleo
+para ~ anth.a + dual + teleo
+#para ~ c(a.p1,a.p2)*anth.a + c(d.p1,d.p2)*dual + c(t.p1,t.p2)*teleo
+
+BiG ~~ para
+
+anth.a ~~ dual + teleo
+
+dual ~~ teleo
+'
+fitOut <- sem(fit, data=ds, mimic='Mplus', ordered="eqNames")
+summary(fitOut, fit.measures=TRUE, standardized=TRUE)
+library(semPlot)
+semPaths(fitOut,whatLabels='std',intercepts = FALSE,structural = TRUE, layout = 'tree2', rotation = 2, residuals = FALSE, nCharNodes = 6)
+```
+
+```{r}
+fitOut <- sem(fit, data = ds,mimic='Mplus', group.equal = c("loadings", "intercepts", "means", "thresholds", "residuals", "residual.covariances", "lv.covariances", "lv.variances"))
+```
